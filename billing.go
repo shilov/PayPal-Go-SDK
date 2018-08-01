@@ -19,15 +19,6 @@ type (
 		UpdateTime          time.Time           `json:"update_time,omitempty"`
 		Links               []Link              `json:"links,omitempty"`
 	}
-
-	// CreateAgreementResp struct
-	CreateAgreementResp struct {
-		Name        string      `json:"name,omitempty"`
-		Description string      `json:"description,omitempty"`
-		Plan        BillingPlan `json:"plan,omitempty"`
-		Links       []Link      `json:"links,omitempty"`
-		StartTime   time.Time   `json:"start_time,omitempty"`
-	}
 )
 
 // CreateBillingPlan creates a billing plan in Paypal
@@ -58,14 +49,14 @@ func (c *Client) ActivatePlan(planID string) error {
 
 // CreateBillingAgreement creates an agreement for specified plan
 // Endpoint: POST /v1/payments/billing-agreements
-func (c *Client) CreateBillingAgreement(a BillingAgreement) (*CreateAgreementResp, error) {
+func (c *Client) CreateBillingAgreement(a BillingAgreement) (*BillingAgreementResponse, error) {
 	// PayPal needs only ID, so we will remove all fields except Plan ID
 	a.Plan = BillingPlan{
 		ID: a.Plan.ID,
 	}
 
 	req, err := c.NewRequest("POST", fmt.Sprintf("%s%s", c.APIBase, "/v1/payments/billing-agreements"), a)
-	response := &CreateAgreementResp{}
+	response := &BillingAgreementResponse{}
 	if err != nil {
 		return response, err
 	}
@@ -75,16 +66,16 @@ func (c *Client) CreateBillingAgreement(a BillingAgreement) (*CreateAgreementRes
 
 // ExecuteApprovedAgreement - Use this call to execute (complete) a PayPal agreement that has been approved by the payer.
 // Endpoint: POST /v1/payments/billing-agreements/token/agreement-execute
-func (c *Client) ExecuteApprovedAgreement(token string) (*ExecuteAgreementResponse, error) {
+func (c *Client) ExecuteApprovedAgreement(token string) (*BillingAgreementResponse, error) {
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", c.APIBase, "/v1/payments/billing-agreements/"+token+"/agreement-execute"), nil)
 	if err != nil {
-		return &ExecuteAgreementResponse{}, err
+		return &BillingAgreementResponse{}, err
 	}
 
 	req.SetBasicAuth(c.ClientID, c.Secret)
 	req.Header.Set("Authorization", "Bearer "+c.Token.Token)
 
-	e := ExecuteAgreementResponse{}
+	e := BillingAgreementResponse{}
 
 	if err = c.SendWithAuth(req, &e); err != nil {
 		return &e, err
@@ -99,8 +90,8 @@ func (c *Client) ExecuteApprovedAgreement(token string) (*ExecuteAgreementRespon
 
 // GetBillingAgreement - Use this call to get billing agreement details.
 // Endpoint: GET /v1/payments/billing-agreements/billing-agreements/ID
-func (c *Client) GetBillingAgreement(agreementID string) (*BillingAgreement, error) {
-	agreement := &BillingAgreement{}
+func (c *Client) GetBillingAgreement(agreementID string) (*BillingAgreementResponse, error) {
+	agreement := &BillingAgreementResponse{}
 
 	req, err := c.NewRequest("GET", fmt.Sprintf("%s%s", c.APIBase, "/v1/payments/billing-agreements/"+agreementID), nil)
 	if err != nil {
